@@ -1,0 +1,20 @@
+sahih n;
+
+
+benvis("Enter a number to calculate factorial: ");
+begir(n);
+
+
+sahih factorial = 1;
+ i = 1;
+
+
+baraye(i = 1; ta i <= n; i = i + 1) {
+    factorial = factorial * i;
+}
+
+
+benvis("Factorial of ");
+benvis(n);
+benvis(" is: ");
+benvis(factorial);

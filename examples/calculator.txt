@@ -1,0 +1,54 @@
+// Simple calculator in AkbariLang
+
+// Define variables for the calculator
+sahih a;
+sahih b;
+sahih operation;
+sahih result = 0;
+
+// Get the first number
+benvis("Enter first number: ");
+begir(a);
+
+// Get the second number
+benvis("Enter second number: ");
+begir(b);
+
+// Get the operation
+benvis("Select operation: ");
+benvis("1: Add");
+benvis("2: Subtract");
+benvis("3: Multiply");
+benvis("4: Divide");
+begir(operation);
+
+// Perform the selected operation
+age (operation == 1) {
+    result = a + b;
+    benvis("Result of addition: ");
+} vali age (operation == 2) {
+    result = a - b;
+    benvis("Result of subtraction: ");
+} vali age (operation == 3) {
+    result = a * b;
+    benvis("Result of multiplication: ");
+} vali age (operation == 4) {
+    age (b == 0) {
+        benvis("Error: Division by zero");
+    } vagarna {
+        result = a / b;
+        benvis("Result of division: ");
+        benvis(result);
+    }
+} vagarna {
+    benvis("Invalid operation selected");
+}
+
+// Print the result if a valid operation was performed
+age (operation >= 1) {
+    age (operation <= 4) {
+        age (!(operation == 4 && b == 0)) {
+            benvis(result);
+        }
+    }
+}
