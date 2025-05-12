@@ -46,6 +46,7 @@ try {
   const semanticAnalyzer = new SemanticAnalyzer();
   semanticAnalyzer.analyze(ast);
   
+  
   // Step 4: Intermediate Code Generation
   console.log(chalk.cyan('Step 4: Intermediate Code Generation'));
   const intermediateGenerator = new IntermediateGenerator();
@@ -80,6 +81,8 @@ try {
     
     // Compile the C++ code
     const executableFile = path.basename(sourceFile, path.extname(sourceFile));
+    const executablePath = process.platform === 'win32' ? `${executableFile}.exe` : `./${executableFile}`;
+    
     exec(`g++ ${outputFile} -o ${executableFile}`, (error, stdout, stderr) => {
       if (error) {
         console.error(chalk.red(`Error compiling C++ code: ${stderr}`));
@@ -89,7 +92,7 @@ try {
       console.log(chalk.green('C++ code compiled successfully'));
       
       // Run the executable
-      exec(`./${executableFile}`, (error, stdout, stderr) => {
+      exec(executablePath, (error, stdout, stderr) => {
         if (error) {
           console.error(chalk.red(`Error running the executable: ${stderr}`));
           return;

@@ -115,34 +115,20 @@ class IntermediateGenerator {
    * @param {IfStatement} statement The IfStatement node
    */
   visitIfStatement(statement) {
-    const endLabel = this.generateLabel();
-    const elseLabel = statement.elseBranch ? this.generateLabel() : endLabel;
-    
     // Generate condition code
     const conditionPlace = this.visitExpression(statement.condition);
     
-    // If condition is false, jump to else branch (or end if no else branch)
-    this.instructions.push(new IntermediateInstruction('JUMP_IF_FALSE', [
-      conditionPlace,
-      elseLabel
-    ]));
+    this.instructions.push(new IntermediateInstruction('IF_BEGIN', [conditionPlace]));
     
     // Generate then branch code
     this.visitStatement(statement.thenBranch);
     
-    // Jump to end (skip else branch)
     if (statement.elseBranch) {
-      this.instructions.push(new IntermediateInstruction('JUMP', [endLabel]));
-      
-      // Label for else branch
-      this.instructions.push(new IntermediateInstruction('LABEL', [elseLabel]));
-      
-      // Generate else branch code
+      this.instructions.push(new IntermediateInstruction('ELSE'));
       this.visitStatement(statement.elseBranch);
     }
     
-    // Label for end of if statement
-    this.instructions.push(new IntermediateInstruction('LABEL', [endLabel]));
+    this.instructions.push(new IntermediateInstruction('IF_END'));
   }
 
   /**
@@ -167,35 +153,25 @@ class IntermediateGenerator {
    * @param {ForStatement} statement The ForStatement node
    */
   visitForStatement(statement) {
-    const startLabel = this.generateLabel();
-    const endLabel = this.generateLabel();
-    
     // Generate initializer code
     this.visitStatement(statement.initializer);
     
-    // Label for start of loop
-    this.instructions.push(new IntermediateInstruction('LABEL', [startLabel]));
+    // Generate for loop structure
+    this.instructions.push(new IntermediateInstruction('FOR_BEGIN'));
     
     // Generate condition code
     const conditionPlace = this.visitExpression(statement.condition);
+    this.instructions.push(new IntermediateInstruction('FOR_CONDITION', [conditionPlace]));
     
-    // If condition is false, jump to end of loop
-    this.instructions.push(new IntermediateInstruction('JUMP_IF_FALSE', [
-      conditionPlace,
-      endLabel
-    ]));
+    // Generate increment code
+    const incrementPlace = this.visitExpression(statement.increment);
+    this.instructions.push(new IntermediateInstruction('FOR_INCREMENT', [incrementPlace]));
     
     // Generate body code
     this.visitStatement(statement.body);
     
-    // Generate increment code
-    this.visitExpression(statement.increment);
-    
-    // Jump back to condition
-    this.instructions.push(new IntermediateInstruction('JUMP', [startLabel]));
-    
-    // Label for end of loop
-    this.instructions.push(new IntermediateInstruction('LABEL', [endLabel]));
+    // End for loop
+    this.instructions.push(new IntermediateInstruction('FOR_END'));
   }
 
   /**
@@ -354,14 +330,6 @@ class IntermediateGenerator {
     ]));
     
     return valuePace;
-  }
-
-  /**
-   * Generate a new label
-   * @returns {string} A new unique label
-   */
-  generateLabel() {
-    return `L${this.labelCount++}`;
   }
 
   /**

@@ -290,8 +290,14 @@ class Optimizer {
     } else if (/^-?\d+\.\d+$/.test(value)) {
       return parseFloat(value);
     } else if (/^".*"$/.test(value)) {
+      if (value.length <= 2) {
+        return "";
+      }
       return value.slice(1, -1);
     } else if (/^'.'$/.test(value)) {
+      if (value.length <= 2) {
+        return "";
+      }
       return value.slice(1, -1);
     }
     

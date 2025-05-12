@@ -9,12 +9,7 @@ class CodeGenerator {
     this.tempVars = new Map(); // Maps temp vars to their types
     this.variables = new Set(); // Tracks all variables
   }
-
-  /**
-   * Generate C++ code from intermediate instructions
-   * @param {IntermediateInstruction[]} instructions The intermediate instructions
-   * @returns {string} The generated C++ code
-   */
+  
   generate(instructions) {
     // First pass: analyze types and collect variables
     for (const instr of instructions) {
@@ -29,6 +24,12 @@ class CodeGenerator {
         }
       } else if (instr.op === 'DECLARE' || instr.op === 'DECLARE_INIT') {
         this.variables.add(instr.args[1]); // Store variable name
+      } else if (instr.op === 'INPUT') {
+        // Add input variables to the variables set
+        this.variables.add(instr.args[0]);
+      } else if (['ADD', 'SUB', 'MUL', 'DIV', 'EQ', 'NEQ', 'LT', 'GT', 'LE', 'GE'].includes(instr.op)) {
+        // Track temporary variables used in operations
+        this.tempVars.set(instr.args[0], 'int');
       }
     }
 
