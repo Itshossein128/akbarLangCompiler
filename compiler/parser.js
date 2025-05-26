@@ -495,8 +495,7 @@ class Parser {
     console.log(this.peek().type == TokenType.EOF);
     if(this.peek().type == TokenType.EOF){
       console.log('shod');
-      
-      return 0
+      return 0;
     }
     this.error(this.peek(), "Expect expression.");
   }
