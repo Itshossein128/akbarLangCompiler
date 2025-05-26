@@ -9,42 +9,55 @@ class CodeGenerator {
     this.tempVars = new Map(); // Maps temp vars to their types
     this.variables = new Set(); // Tracks all variables
   }
-  
+
   generate(instructions) {
     // First pass: analyze types and collect variables
     for (const instr of instructions) {
-      if (instr.op === 'LOAD') {
+      if (instr.op === "LOAD") {
         const value = instr.args[1];
-        if (typeof value === 'string' && value.startsWith('"')) {
-          this.tempVars.set(instr.args[0], 'std::string');
-        } else if (typeof value === 'string' && value.includes('.')) {
-          this.tempVars.set(instr.args[0], 'double');
+        if (typeof value === "string" && value.startsWith('"')) {
+          this.tempVars.set(instr.args[0], "std::string");
+        } else if (typeof value === "string" && value.includes(".")) {
+          this.tempVars.set(instr.args[0], "double");
         } else {
-          this.tempVars.set(instr.args[0], 'int');
+          this.tempVars.set(instr.args[0], "int");
         }
-      } else if (instr.op === 'DECLARE' || instr.op === 'DECLARE_INIT') {
+      } else if (instr.op === "DECLARE" || instr.op === "DECLARE_INIT") {
         this.variables.add(instr.args[1]); // Store variable name
-      } else if (instr.op === 'INPUT') {
+      } else if (instr.op === "INPUT") {
         // Add input variables to the variables set
         this.variables.add(instr.args[0]);
-      } else if (['ADD', 'SUB', 'MUL', 'DIV', 'EQ', 'NEQ', 'LT', 'GT', 'LE', 'GE'].includes(instr.op)) {
+      } else if (
+        [
+          "ADD",
+          "SUB",
+          "MUL",
+          "DIV",
+          "EQ",
+          "NEQ",
+          "LT",
+          "GT",
+          "LE",
+          "GE",
+        ].includes(instr.op)
+      ) {
         // Track temporary variables used in operations
-        this.tempVars.set(instr.args[0], 'int');
+        this.tempVars.set(instr.args[0], "int");
       }
     }
 
     // Generate includes
-    this.addCode('#include <iostream>');
-    this.addCode('#include <string>');
-    this.addCode('');
+    this.addCode("#include <iostream>");
+    this.addCode("#include <string>");
+    this.addCode("");
 
     // Begin main function
-    this.addCode('int main() {');
+    this.addCode("int main() {");
     this.indentLevel++;
 
     // Declare all variables first
     if (this.tempVars.size > 0 || this.variables.size > 0) {
-      this.addCode('// Declare variables');
+      this.addCode("// Declare variables");
       // First declare program variables
       for (const variable of this.variables) {
         this.addCode(`int ${variable};`); // Assuming all program variables are int for now
@@ -53,7 +66,7 @@ class CodeGenerator {
       for (const [name, type] of this.tempVars) {
         this.addCode(`${type} ${name};`);
       }
-      this.addCode('');
+      this.addCode("");
     }
 
     // Process all instructions
@@ -62,11 +75,11 @@ class CodeGenerator {
     }
 
     // End main function
-    this.addCode('return 0;');
+    this.addCode("return 0;");
     this.indentLevel--;
-    this.addCode('}');
+    this.addCode("}");
 
-    return this.code.join('\n');
+    return this.code.join("\n");
   }
 
   /**
@@ -75,72 +88,120 @@ class CodeGenerator {
    */
   processInstruction(instr) {
     switch (instr.op) {
-      case 'DECLARE':
+      case "DECLARE":
         this.generateDeclare(instr.args[0], instr.args[1]);
         break;
-      case 'DECLARE_INIT':
+      case "DECLARE_INIT":
         this.generateDeclareInit(instr.args[0], instr.args[1], instr.args[2]);
         break;
-      case 'ASSIGN':
+      case "ASSIGN":
         this.generateAssign(instr.args[0], instr.args[1]);
         break;
-      case 'LOAD':
+      case "LOAD":
         this.generateLoad(instr.args[0], instr.args[1]);
         break;
-      case 'ADD':
-        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], '+');
+      case "ADD":
+        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], "+");
         break;
-      case 'SUB':
-        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], '-');
+      case "SUB":
+        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], "-");
         break;
-      case 'MUL':
-        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], '*');
+      case "MUL":
+        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], "*");
         break;
-      case 'DIV':
-        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], '/');
+      case "DIV":
+        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], "/");
         break;
-      case 'EQ':
-        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], '==');
+      case "EQ":
+        this.generateBinaryOp(
+          instr.args[0],
+          instr.args[1],
+          instr.args[2],
+          "=="
+        );
         break;
-      case 'NEQ':
-        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], '!=');
+      case "NEQ":
+        this.generateBinaryOp(
+          instr.args[0],
+          instr.args[1],
+          instr.args[2],
+          "!="
+        );
         break;
-      case 'LT':
-        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], '<');
+      case "LT":
+        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], "<");
         break;
-      case 'GT':
-        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], '>');
+      case "GT":
+        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], ">");
         break;
-      case 'LE':
-        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], '<=');
+      case "LE":
+        this.generateBinaryOp(
+          instr.args[0],
+          instr.args[1],
+          instr.args[2],
+          "<="
+        );
         break;
-      case 'GE':
-        this.generateBinaryOp(instr.args[0], instr.args[1], instr.args[2], '>=');
+      case "GE":
+        this.generateBinaryOp(
+          instr.args[0],
+          instr.args[1],
+          instr.args[2],
+          ">="
+        );
         break;
-      case 'NEG':
-        this.generateUnaryOp(instr.args[0], instr.args[1], '-');
+      case "AND":
+        this.generateBinaryOp(
+          instr.args[0],
+          instr.args[1],
+          instr.args[2],
+          "&&"
+        );
         break;
-      case 'INPUT':
+      case "OR":
+        this.generateBinaryOp(
+          instr.args[0],
+          instr.args[1],
+          instr.args[2],
+          "||"
+        );
+        break;
+      case "NEG":
+        this.generateUnaryOp(instr.args[0], instr.args[1], "-");
+        break;
+      case "INPUT":
         this.generateInput(instr.args[0]);
         break;
-      case 'OUTPUT':
+      case "OUTPUT":
         this.generateOutput(instr.args[0]);
         break;
-      case 'JUMP':
-        this.generateJump(instr.args[0]);
+      case "FOR_BEGIN":
+        this.generateForBegin(instr.args[0], instr.args[1], instr.args[2]);
         break;
-      case 'JUMP_IF_FALSE':
+      case "FOR_END":
+        this.generateForEnd();
+        break;
+      case "JUMP_IF_FALSE":
         this.generateJumpIfFalse(instr.args[0], instr.args[1]);
         break;
-      case 'LABEL':
-        this.generateLabel(instr.args[0]);
-        break;
-      case 'SCOPE_BEGIN':
+      case "SCOPE_BEGIN":
         this.generateScopeBegin();
         break;
-      case 'SCOPE_END':
+      case "SCOPE_END":
         this.generateScopeEnd();
         break;
+      case "FOR_LOOP_START": {
+        const [init, cond, incr] = instr.args;
+        this.addCode(`for (${init}; ${cond}; ${incr}) {`);
+        this.indentLevel++;
+        break;
+      }
+      
+      case "FOR_LOOP_END": {
+        this.indentLevel--;
+        this.addCode("}");
+        break;
+      }
     }
   }
 
@@ -176,33 +237,50 @@ class CodeGenerator {
     this.addCode(`std::cout << ${value} << std::endl;`);
   }
 
-  generateJump(label) {
-    this.addCode(`goto ${label};`);
+  generateForBegin(init, condition, increment) {
+    this.addCode(`for (${init}; ${condition}; ${increment}) {`);
+    this.indentLevel++;
+  }
+
+  generateForEnd() {
+    this.indentLevel--;
+    this.addCode("}");
   }
 
   generateJumpIfFalse(condition, label) {
     this.addCode(`if (!(${condition})) goto ${label};`);
   }
 
-  generateLabel(label) {
-    this.indentLevel--;
-    this.addCode(`${label}:`);
-    this.indentLevel++;
-  }
-
   generateScopeBegin() {
-    this.addCode('{');
+    this.addCode("{");
     this.indentLevel++;
   }
 
   generateScopeEnd() {
     this.indentLevel--;
-    this.addCode('}');
+    this.addCode("}");
+  }
+
+  // Remove these methods as they're not being used correctly
+  generateForLoopStart() {
+      return "for (";
+  }
+  
+  generateForLoopCondition(condition) {
+      return `${condition}; `;
+  }
+  
+  generateForLoopIncrement(increment) {
+      return `${increment}) `;
+  }
+  
+  generateForLoopEnd() {
+      return "}";
   }
 
   addCode(line, position = undefined) {
-    const indentedLine = '  '.repeat(this.indentLevel) + line;
-    
+    const indentedLine = "  ".repeat(this.indentLevel) + line;
+
     if (position !== undefined) {
       this.code.splice(position, 0, indentedLine);
     } else {

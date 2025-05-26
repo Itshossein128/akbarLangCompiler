@@ -1,4 +1,4 @@
-const { TokenType } = require('./token');
+const { TokenType, Token } = require("./token");
 const {
   Program,
   VariableDeclaration,
@@ -12,8 +12,8 @@ const {
   VariableExpression,
   LiteralExpression,
   InputExpression,
-  OutputExpression
-} = require('./ast');
+  OutputExpression,
+} = require("./ast");
 
 /**
  * Parser class for syntax analysis
@@ -31,23 +31,23 @@ class Parser {
    */
   parse() {
     const statements = [];
-    
+
     // Skip any comments at the start of the file
     while (!this.isAtEnd() && this.check(TokenType.COMMENT)) {
       this.advance();
     }
-    
+
     while (!this.isAtEnd()) {
       // Skip any comments between statements
       while (this.check(TokenType.COMMENT)) {
         this.advance();
       }
-      
+
       if (!this.isAtEnd()) {
         statements.push(this.statement());
       }
     }
-    
+
     return new Program(statements);
   }
 
@@ -60,31 +60,31 @@ class Parser {
     while (this.check(TokenType.COMMENT)) {
       this.advance();
     }
-    
+
     if (this.match(TokenType.SAHIH, TokenType.ASHAR, TokenType.HARF)) {
       return this.variableDeclaration();
     }
-    
+
     if (this.match(TokenType.BEGIR)) {
       return this.inputStatement();
     }
-    
+
     if (this.match(TokenType.BENVIS)) {
       return this.outputStatement();
     }
-    
-    if (this.match(TokenType.AGE)) {
+
+    if (this.match(TokenType.AGE, TokenType.VALI, TokenType.VAGARNA)) {
       return this.ifStatement();
     }
-    
+
     if (this.match(TokenType.BARAYE)) {
       return this.forStatement();
     }
-    
+
     if (this.match(TokenType.LEFT_BRACE)) {
       return this.blockStatement();
     }
-    
+
     return this.expressionStatement();
   }
 
@@ -95,12 +95,12 @@ class Parser {
   variableDeclaration() {
     const type = this.previous();
     const name = this.consume(TokenType.IDENTIFIER, "Expect variable name.");
-    
+
     let initializer = null;
     if (this.match(TokenType.EQUAL)) {
       initializer = this.expression();
     }
-    
+
     this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
     return new VariableDeclaration(
       type.type,
@@ -117,10 +117,16 @@ class Parser {
    */
   inputStatement() {
     this.consume(TokenType.LEFT_PAREN, "Expect '(' after 'begir'.");
-    const variable = this.consume(TokenType.IDENTIFIER, "Expect variable name in input statement.");
-    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after variable name in input statement.");
+    const variable = this.consume(
+      TokenType.IDENTIFIER,
+      "Expect variable name in input statement."
+    );
+    this.consume(
+      TokenType.RIGHT_PAREN,
+      "Expect ')' after variable name in input statement."
+    );
     this.consume(TokenType.SEMICOLON, "Expect ';' after input statement.");
-    
+
     return new ExpressionStatement(
       new InputExpression(variable.value, variable.line, variable.column),
       variable.line,
@@ -135,9 +141,12 @@ class Parser {
   outputStatement() {
     this.consume(TokenType.LEFT_PAREN, "Expect '(' after 'benvis'.");
     const expr = this.expression();
-    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression in output statement.");
+    this.consume(
+      TokenType.RIGHT_PAREN,
+      "Expect ')' after expression in output statement."
+    );
     this.consume(TokenType.SEMICOLON, "Expect ';' after output statement.");
-    
+
     return new ExpressionStatement(
       new OutputExpression(expr, expr.line, expr.column),
       expr.line,
@@ -153,28 +162,25 @@ class Parser {
     this.consume(TokenType.LEFT_PAREN, "Expect '(' after 'age'.");
     const condition = this.expression();
     this.consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
-    
+
     const thenBranch = this.statement();
     let elseBranch = null;
-    
-    if (this.match(TokenType.VALI_AGE)) {
-      this.consume(TokenType.LEFT_PAREN, "Expect '(' after 'vali age'.");
-      const elseIfCondition = this.expression();
-      this.consume(TokenType.RIGHT_PAREN, "Expect ')' after else-if condition.");
-      const elseIfBranch = this.statement();
-      
-      // Create an IfStatement for the else-if part
-      elseBranch = new IfStatement(
-        elseIfCondition,
-        elseIfBranch,
-        null,
-        elseIfCondition.line,
-        elseIfCondition.column
-      );
-    } else if (this.match(TokenType.VAGARNA)) {
+
+    // Check for else-if or else
+    // let i = 0
+
+    if (this.check(TokenType.VALI)) {
+      this.advance(); // Consume 'vali'
+      if (this.match(TokenType.AGE)) {
+        this.ifStatement();
+      }
+
+      elseBranch = this.statement();
+    } else if (this.check(TokenType.VAGARNA)) {
+      this.advance(); // Consume 'vagarna'
       elseBranch = this.statement();
     }
-    
+
     return new IfStatement(
       condition,
       thenBranch,
@@ -190,7 +196,7 @@ class Parser {
    */
   forStatement() {
     this.consume(TokenType.LEFT_PAREN, "Expect '(' after 'baraye'.");
-    
+
     // Parse initializer
     let initializer;
     if (this.match(TokenType.SAHIH, TokenType.ASHAR, TokenType.HARF)) {
@@ -198,19 +204,22 @@ class Parser {
     } else {
       initializer = this.expressionStatement();
     }
-    
+
     // Parse condition
-    this.consume(TokenType.TA, "Expect 'ta' after initializer in for loop.");
+    // this.consume(TokenType.TA, "Expect 'ta' after initializer in for loop.");
     const condition = this.expression();
-    this.consume(TokenType.SEMICOLON, "Expect ';' after condition in for loop.");
-    
+    this.consume(
+      TokenType.SEMICOLON,
+      "Expect ';' after condition in for loop."
+    );
+
     // Parse increment
     const increment = this.expression();
     this.consume(TokenType.RIGHT_PAREN, "Expect ')' after for loop clauses.");
-    
+
     // Parse body
     const body = this.statement();
-    
+
     return new ForStatement(
       initializer,
       condition,
@@ -229,20 +238,21 @@ class Parser {
     const statements = [];
     const line = this.previous().line;
     const column = this.previous().column;
-    
+
     while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+      
       // Skip any comments inside blocks
       while (this.check(TokenType.COMMENT)) {
         this.advance();
       }
-      
+
       if (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
         statements.push(this.statement());
       }
     }
-    
+
     this.consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
-    
+
     return new BlockStatement(statements, line, column);
   }
 
@@ -265,13 +275,16 @@ class Parser {
     while (this.check(TokenType.COMMENT)) {
       this.advance();
     }
-    
+
     // If it's an assignment
     if (this.checkNext(TokenType.EQUAL)) {
-      const variable = this.consume(TokenType.IDENTIFIER, "Expect variable name.");
+      const variable = this.consume(
+        TokenType.IDENTIFIER,
+        "Expect variable name."
+      );
       this.consume(TokenType.EQUAL, "Expect '=' after variable name.");
       const value = this.expression();
-      
+
       return new AssignmentExpression(
         variable.value,
         value,
@@ -279,8 +292,30 @@ class Parser {
         variable.column
       );
     }
-    
-    return this.equality();
+
+    return this.logical();
+  }
+
+  /**
+   * Parse logical expressions (va, ya)
+   * @returns {ASTNode} Expression node
+   */
+  logical() {
+    let expr = this.equality();
+
+    while (this.match(TokenType.VA, TokenType.YA)) {
+      const operator = this.previous();
+      const right = this.equality();
+      expr = new BinaryExpression(
+        expr,
+        operator,
+        right,
+        operator.line,
+        operator.column
+      );
+    }
+
+    return expr;
   }
 
   /**
@@ -289,7 +324,7 @@ class Parser {
    */
   equality() {
     let expr = this.comparison();
-    
+
     while (this.match(TokenType.EQUAL_EQUAL, TokenType.NOT_EQUAL)) {
       const operator = this.previous();
       const right = this.comparison();
@@ -301,7 +336,7 @@ class Parser {
         operator.column
       );
     }
-    
+
     return expr;
   }
 
@@ -311,13 +346,15 @@ class Parser {
    */
   comparison() {
     let expr = this.term();
-    
-    while (this.match(
-      TokenType.LESS_THAN,
-      TokenType.GREATER_THAN,
-      TokenType.LESS_EQUAL,
-      TokenType.GREATER_EQUAL
-    )) {
+
+    while (
+      this.match(
+        TokenType.LESS_THAN,
+        TokenType.GREATER_THAN,
+        TokenType.LESS_EQUAL,
+        TokenType.GREATER_EQUAL
+      )
+    ) {
       const operator = this.previous();
       const right = this.term();
       expr = new BinaryExpression(
@@ -328,7 +365,7 @@ class Parser {
         operator.column
       );
     }
-    
+
     return expr;
   }
 
@@ -338,7 +375,7 @@ class Parser {
    */
   term() {
     let expr = this.factor();
-    
+
     while (this.match(TokenType.PLUS, TokenType.MINUS)) {
       const operator = this.previous();
       const right = this.factor();
@@ -350,7 +387,7 @@ class Parser {
         operator.column
       );
     }
-    
+
     return expr;
   }
 
@@ -360,7 +397,7 @@ class Parser {
    */
   factor() {
     let expr = this.unary();
-    
+
     while (this.match(TokenType.MULTIPLY, TokenType.DIVIDE)) {
       const operator = this.previous();
       const right = this.unary();
@@ -372,7 +409,7 @@ class Parser {
         operator.column
       );
     }
-    
+
     return expr;
   }
 
@@ -381,7 +418,7 @@ class Parser {
    * @returns {ASTNode} Expression node
    */
   unary() {
-    if (this.match(TokenType.MINUS)) {
+    if (this.match(TokenType.MINUS) || this.match(TokenType.BANG)) {
       const operator = this.previous();
       const right = this.unary();
       return new UnaryExpression(
@@ -391,7 +428,7 @@ class Parser {
         operator.column
       );
     }
-    
+
     return this.primary();
   }
 
@@ -404,7 +441,7 @@ class Parser {
     while (this.check(TokenType.COMMENT)) {
       this.advance();
     }
-    
+
     if (this.match(TokenType.INTEGER)) {
       const token = this.previous();
       return new LiteralExpression(
@@ -414,7 +451,7 @@ class Parser {
         token.column
       );
     }
-    
+
     if (this.match(TokenType.FLOAT)) {
       const token = this.previous();
       return new LiteralExpression(
@@ -424,7 +461,7 @@ class Parser {
         token.column
       );
     }
-    
+
     if (this.match(TokenType.STRING)) {
       const token = this.previous();
       return new LiteralExpression(
@@ -434,7 +471,7 @@ class Parser {
         token.column
       );
     }
-    
+
     if (this.match(TokenType.CHARACTER)) {
       const token = this.previous();
       return new LiteralExpression(
@@ -444,22 +481,23 @@ class Parser {
         token.column
       );
     }
-    
+
     if (this.match(TokenType.IDENTIFIER)) {
       const token = this.previous();
-      return new VariableExpression(
-        token.value,
-        token.line,
-        token.column
-      );
+      return new VariableExpression(token.value, token.line, token.column);
     }
-    
+
     if (this.match(TokenType.LEFT_PAREN)) {
       const expr = this.expression();
       this.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.");
       return expr;
     }
-    
+    console.log(this.peek().type == TokenType.EOF);
+    if(this.peek().type == TokenType.EOF){
+      console.log('shod');
+      
+      return 0
+    }
     this.error(this.peek(), "Expect expression.");
   }
 
@@ -475,7 +513,7 @@ class Parser {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -541,7 +579,7 @@ class Parser {
    */
   consume(type, message) {
     if (this.check(type)) return this.advance();
-    
+
     this.error(this.peek(), message);
   }
 
@@ -551,7 +589,9 @@ class Parser {
    * @param {string} message Error message
    */
   error(token, message) {
-    const err = new Error(`Parse error at line ${token.line}, column ${token.column}: ${message}`);
+    const err = new Error(
+      `Parse error at line ${token.line}, column ${token.column}: ${message}`
+    );
     err.lineNumber = token.line;
     err.columnNumber = token.column;
     throw err;

@@ -10,7 +10,6 @@ const IntermediateGenerator = require('./compiler/intermediate');
 const Optimizer = require('./compiler/optimizer');
 const CodeGenerator = require('./compiler/generator');
 
-// Check if source file is provided
 if (process.argv.length < 3) {
   console.error(chalk.red('Error: Source file is required'));
   console.log(chalk.yellow('Usage: node index.js <source_file.txt>'));
@@ -19,24 +18,24 @@ if (process.argv.length < 3) {
 
 const sourceFile = process.argv[2];
 
-// Check if source file exists
 if (!fs.existsSync(sourceFile)) {
   console.error(chalk.red(`Error: Source file '${sourceFile}' not found`));
   process.exit(1);
 }
 
 try {
-  // Read the source code
   const sourceCode = fs.readFileSync(sourceFile, 'utf8');
   
   console.log(chalk.blue('Starting compilation process for AkbariLang...'));
   
-  // Step 1: Lexical Analysis
   console.log(chalk.cyan('Step 1: Lexical Analysis'));
   const lexer = new Lexer(sourceCode);
   const tokens = lexer.tokenize();
   
+  
   // Step 2: Syntax Analysis
+  // console.log(tokens.slice(70));
+  
   console.log(chalk.cyan('Step 2: Syntax Analysis'));
   const parser = new Parser(tokens);
   const ast = parser.parse();
@@ -50,6 +49,8 @@ try {
   // Step 4: Intermediate Code Generation
   console.log(chalk.cyan('Step 4: Intermediate Code Generation'));
   const intermediateGenerator = new IntermediateGenerator();
+  
+  
   const intermediateCode = intermediateGenerator.generate(ast);
   
   // Step 5: Code Optimization
@@ -98,8 +99,8 @@ try {
           return;
         }
         
-        console.log(chalk.green('Program output:'));
-        console.log(stdout);
+        // console.log(chalk.green('Program output:'));
+        // console.log(stdout);
       });
     });
   });

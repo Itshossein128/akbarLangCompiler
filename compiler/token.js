@@ -1,6 +1,3 @@
-/**
- * Token class represents a token in the AkbariLang
- */
 class Token {
   constructor(type, value, line, column) {
     this.type = type;
@@ -10,9 +7,7 @@ class Token {
   }
 }
 
-/**
- * TokenType enum defines all possible token types for AkbariLang
- */
+// Make sure these token types are defined
 const TokenType = {
   // Keywords
   BEGIR: 'BEGIR',         // cin
@@ -21,10 +16,9 @@ const TokenType = {
   ASHAR: 'ASHAR',         // float
   HARF: 'HARF',           // char
   AGE: 'AGE',             // if
-  VALI_AGE: 'VALI_AGE',   // else if
+  VALI: 'VALI',   // else if
   VAGARNA: 'VAGARNA',     // else
   BARAYE: 'BARAYE',       // for
-  TA: 'TA',               // to (used in for loops)
   
   // Symbols
   EQUAL: 'EQUAL',             // =
@@ -38,6 +32,8 @@ const TokenType = {
   GREATER_EQUAL: 'GREATER_EQUAL', // >=
   EQUAL_EQUAL: 'EQUAL_EQUAL', // ==
   NOT_EQUAL: 'NOT_EQUAL',     // !=
+  VA: 'VA',                   // &&
+  YA: 'YA',                   // ||
   
   // Punctuation
   LEFT_PAREN: 'LEFT_PAREN',   // (
@@ -60,9 +56,7 @@ const TokenType = {
   UNKNOWN: 'UNKNOWN'          // Unknown token
 };
 
-/**
- * Keywords map for easy lookup
- */
+
 const Keywords = {
   'begir': TokenType.BEGIR,
   'benvis': TokenType.BENVIS,
@@ -70,10 +64,12 @@ const Keywords = {
   'ashar': TokenType.ASHAR,
   'harf': TokenType.HARF,
   'age': TokenType.AGE,
-  'vali': TokenType.VALI_AGE, // This is special handling, see lexer
+  'vali': TokenType.VALI,
   'vagarna': TokenType.VAGARNA,
   'baraye': TokenType.BARAYE,
-  'ta': TokenType.TA
+  'ta': TokenType.TA,
+  'va': TokenType.VA,
+  'ya': TokenType.YA
 };
 
 module.exports = {

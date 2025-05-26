@@ -423,6 +423,8 @@ class SemanticAnalyzer {
     
     if (expression.operator.type === 'MINUS') {
       return rightType;
+    } else if (expression.operator.type === 'BANG') {
+      return 'BOOLEAN';
     }
     
     return null;

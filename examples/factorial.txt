@@ -1,4 +1,6 @@
 
+
+
 sahih n;
 
 
@@ -7,10 +9,9 @@ begir(n);
 
 
 sahih factorial = 1;
-sahih i = 1;
 
 
-baraye(i = 1; ta i <= n; i = i + 1) {
+baraye(sahih i = 1; i <= n; i = i + 1) {
     factorial = factorial * i;
 }
 

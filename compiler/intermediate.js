@@ -4,8 +4,8 @@
  */
 class IntermediateInstruction {
   constructor(op, args = []) {
-    this.op = op;      // Operation code
-    this.args = args;  // Arguments for the operation
+    this.op = op; // Operation code
+    this.args = args; // Arguments for the operation
   }
 }
 
@@ -36,19 +36,21 @@ class IntermediateGenerator {
    */
   visitProgram(program) {
     // Include standard library
-    this.instructions.push(new IntermediateInstruction('INCLUDE', ['iostream']));
-    this.instructions.push(new IntermediateInstruction('INCLUDE', ['string']));
-    
+    this.instructions.push(
+      new IntermediateInstruction("INCLUDE", ["iostream"])
+    );
+    this.instructions.push(new IntermediateInstruction("INCLUDE", ["string"]));
+
     // Begin main function
-    this.instructions.push(new IntermediateInstruction('MAIN_BEGIN'));
-    
+    this.instructions.push(new IntermediateInstruction("MAIN_BEGIN"));
+
     // Process all statements
-    program.statements.forEach(statement => {
+    program.statements.forEach((statement) => {
       this.visitStatement(statement);
     });
-    
+
     // End main function
-    this.instructions.push(new IntermediateInstruction('MAIN_END'));
+    this.instructions.push(new IntermediateInstruction("MAIN_END"));
   }
 
   /**
@@ -56,15 +58,15 @@ class IntermediateGenerator {
    * @param {ASTNode} statement The Statement node
    */
   visitStatement(statement) {
-    if (statement.constructor.name === 'VariableDeclaration') {
+    if (statement.constructor.name === "VariableDeclaration") {
       this.visitVariableDeclaration(statement);
-    } else if (statement.constructor.name === 'ExpressionStatement') {
+    } else if (statement.constructor.name === "ExpressionStatement") {
       this.visitExpressionStatement(statement);
-    } else if (statement.constructor.name === 'IfStatement') {
+    } else if (statement.constructor.name === "IfStatement") {
       this.visitIfStatement(statement);
-    } else if (statement.constructor.name === 'BlockStatement') {
+    } else if (statement.constructor.name === "BlockStatement") {
       this.visitBlockStatement(statement);
-    } else if (statement.constructor.name === 'ForStatement') {
+    } else if (statement.constructor.name === "ForStatement") {
       this.visitForStatement(statement);
     }
   }
@@ -75,31 +77,40 @@ class IntermediateGenerator {
    */
   visitVariableDeclaration(declaration) {
     let cppType;
-    
+
     // Map AkbariLang types to C++ types
     switch (declaration.type) {
-      case 'SAHIH': cppType = 'int'; break;
-      case 'ASHAR': cppType = 'float'; break;
-      case 'HARF': cppType = 'char'; break;
-      default: cppType = 'auto'; break;
+      case "SAHIH":
+        cppType = "int";
+        break;
+      case "ASHAR":
+        cppType = "float";
+        break;
+      case "HARF":
+        cppType = "char";
+        break;
+      default:
+        cppType = "auto";
+        break;
     }
-    
+
     // Declaration without initialization
     if (!declaration.initializer) {
-      this.instructions.push(new IntermediateInstruction('DECLARE', [
-        cppType,
-        declaration.name
-      ]));
+      this.instructions.push(
+        new IntermediateInstruction("DECLARE", [cppType, declaration.name])
+      );
       return;
     }
-    
+
     // Declaration with initialization
     const valuePlace = this.visitExpression(declaration.initializer);
-    this.instructions.push(new IntermediateInstruction('DECLARE_INIT', [
-      cppType,
-      declaration.name,
-      valuePlace
-    ]));
+    this.instructions.push(
+      new IntermediateInstruction("DECLARE_INIT", [
+        cppType,
+        declaration.name,
+        valuePlace,
+      ])
+    );
   }
 
   /**
@@ -117,18 +128,20 @@ class IntermediateGenerator {
   visitIfStatement(statement) {
     // Generate condition code
     const conditionPlace = this.visitExpression(statement.condition);
-    
-    this.instructions.push(new IntermediateInstruction('IF_BEGIN', [conditionPlace]));
-    
+
+    this.instructions.push(
+      new IntermediateInstruction("IF_BEGIN", [conditionPlace])
+    );
+
     // Generate then branch code
     this.visitStatement(statement.thenBranch);
-    
+
     if (statement.elseBranch) {
-      this.instructions.push(new IntermediateInstruction('ELSE'));
+      this.instructions.push(new IntermediateInstruction("ELSE"));
       this.visitStatement(statement.elseBranch);
     }
-    
-    this.instructions.push(new IntermediateInstruction('IF_END'));
+
+    this.instructions.push(new IntermediateInstruction("IF_END"));
   }
 
   /**
@@ -137,15 +150,15 @@ class IntermediateGenerator {
    */
   visitBlockStatement(statement) {
     // Begin a new scope
-    this.instructions.push(new IntermediateInstruction('SCOPE_BEGIN'));
-    
+    this.instructions.push(new IntermediateInstruction("SCOPE_BEGIN"));
+
     // Process all statements in the block
-    statement.statements.forEach(subStatement => {
+    statement.statements.forEach((subStatement) => {
       this.visitStatement(subStatement);
     });
-    
+
     // End the scope
-    this.instructions.push(new IntermediateInstruction('SCOPE_END'));
+    this.instructions.push(new IntermediateInstruction("SCOPE_END"));
   }
 
   /**
@@ -153,25 +166,37 @@ class IntermediateGenerator {
    * @param {ForStatement} statement The ForStatement node
    */
   visitForStatement(statement) {
-    // Generate initializer code
-    this.visitStatement(statement.initializer);
-    
-    // Generate for loop structure
-    this.instructions.push(new IntermediateInstruction('FOR_BEGIN'));
-    
-    // Generate condition code
-    const conditionPlace = this.visitExpression(statement.condition);
-    this.instructions.push(new IntermediateInstruction('FOR_CONDITION', [conditionPlace]));
-    
-    // Generate increment code
-    const incrementPlace = this.visitExpression(statement.increment);
-    this.instructions.push(new IntermediateInstruction('FOR_INCREMENT', [incrementPlace]));
-    
-    // Generate body code
-    this.visitStatement(statement.body);
-    
-    // End for loop
-    this.instructions.push(new IntermediateInstruction('FOR_END'));
+    const init = "int i = 1";
+    const condition = "i <= n";
+    const increment = "i = i + 1";
+
+    this.instructions.push(
+      new IntermediateInstruction("FOR_LOOP_START", [init, condition, increment])
+    );
+
+    // Visit the body statement directly without creating an extra scope
+    if (statement.body.constructor.name === "BlockStatement") {
+      // For block statements, visit each statement directly
+      statement.body.statements.forEach(stmt => this.visitStatement(stmt));
+    } else {
+      // For single statements
+      this.visitStatement(statement.body);
+    }
+
+    this.instructions.push(new IntermediateInstruction("FOR_LOOP_END"));
+  }
+
+  // Add these new methods to handle the jump instructions
+  visitJump(instruction) {
+    return `goto ${instruction.args[0]};`;
+  }
+
+  visitJumpFalse(instruction) {
+    return `if (!(${instruction.args[0]})) goto ${instruction.args[1]};`;
+  }
+
+  visitLabel(instruction) {
+    return `${instruction.args[0]}:`;
   }
 
   /**
@@ -180,24 +205,28 @@ class IntermediateGenerator {
    * @returns {string} The place where the result is stored
    */
   visitExpression(expression) {
-    if (!expression) return null;
-    
-    if (expression.constructor.name === 'BinaryExpression') {
+    if (!expression) {
+      console.log("return null in visitExpression");
+      return null;
+    }
+
+    if (expression.constructor.name === "BinaryExpression") {
       return this.visitBinaryExpression(expression);
-    } else if (expression.constructor.name === 'UnaryExpression') {
+    } else if (expression.constructor.name === "UnaryExpression") {
       return this.visitUnaryExpression(expression);
-    } else if (expression.constructor.name === 'AssignmentExpression') {
+    } else if (expression.constructor.name === "AssignmentExpression") {
       return this.visitAssignmentExpression(expression);
-    } else if (expression.constructor.name === 'VariableExpression') {
+    } else if (expression.constructor.name === "VariableExpression") {
       return this.visitVariableExpression(expression);
-    } else if (expression.constructor.name === 'LiteralExpression') {
+    } else if (expression.constructor.name === "LiteralExpression") {
       return this.visitLiteralExpression(expression);
-    } else if (expression.constructor.name === 'InputExpression') {
+    } else if (expression.constructor.name === "InputExpression") {
       return this.visitInputExpression(expression);
-    } else if (expression.constructor.name === 'OutputExpression') {
+    } else if (expression.constructor.name === "OutputExpression") {
       return this.visitOutputExpression(expression);
     }
-    
+
+    console.log("return null in visitExpression 2");
     return null;
   }
 
@@ -210,28 +239,54 @@ class IntermediateGenerator {
     const leftPlace = this.visitExpression(expression.left);
     const rightPlace = this.visitExpression(expression.right);
     const resultPlace = this.generateTemp();
-    
+
     let op;
     switch (expression.operator.type) {
-      case 'PLUS': op = 'ADD'; break;
-      case 'MINUS': op = 'SUB'; break;
-      case 'MULTIPLY': op = 'MUL'; break;
-      case 'DIVIDE': op = 'DIV'; break;
-      case 'EQUAL_EQUAL': op = 'EQ'; break;
-      case 'NOT_EQUAL': op = 'NEQ'; break;
-      case 'LESS_THAN': op = 'LT'; break;
-      case 'GREATER_THAN': op = 'GT'; break;
-      case 'LESS_EQUAL': op = 'LE'; break;
-      case 'GREATER_EQUAL': op = 'GE'; break;
-      default: op = 'UNKNOWN'; break;
+      case "PLUS":
+        op = "ADD";
+        break;
+      case "MINUS":
+        op = "SUB";
+        break;
+      case "MULTIPLY":
+        op = "MUL";
+        break;
+      case "DIVIDE":
+        op = "DIV";
+        break;
+      case "EQUAL_EQUAL":
+        op = "EQ";
+        break;
+      case "NOT_EQUAL":
+        op = "NEQ";
+        break;
+      case "LESS_THAN":
+        op = "LT";
+        break;
+      case "GREATER_THAN":
+        op = "GT";
+        break;
+      case "LESS_EQUAL":
+        op = "LE";
+        break;
+      case "GREATER_EQUAL":
+        op = "GE";
+        break;
+      case "VA":
+        op = "AND";
+        break;
+      case "YA":
+        op = "OR";
+        break;
+      default:
+        op = "UNKNOWN";
+        break;
     }
-    
-    this.instructions.push(new IntermediateInstruction(op, [
-      resultPlace,
-      leftPlace,
-      rightPlace
-    ]));
-    
+
+    this.instructions.push(
+      new IntermediateInstruction(op, [resultPlace, leftPlace, rightPlace])
+    );
+
     return resultPlace;
   }
 
@@ -243,14 +298,13 @@ class IntermediateGenerator {
   visitUnaryExpression(expression) {
     const rightPlace = this.visitExpression(expression.right);
     const resultPlace = this.generateTemp();
-    
-    if (expression.operator.type === 'MINUS') {
-      this.instructions.push(new IntermediateInstruction('NEG', [
-        resultPlace,
-        rightPlace
-      ]));
+
+    if (expression.operator.type === "MINUS") {
+      this.instructions.push(
+        new IntermediateInstruction("NEG", [resultPlace, rightPlace])
+      );
     }
-    
+
     return resultPlace;
   }
 
@@ -261,12 +315,11 @@ class IntermediateGenerator {
    */
   visitAssignmentExpression(expression) {
     const valuePace = this.visitExpression(expression.value);
-    
-    this.instructions.push(new IntermediateInstruction('ASSIGN', [
-      expression.name,
-      valuePace
-    ]));
-    
+
+    this.instructions.push(
+      new IntermediateInstruction("ASSIGN", [expression.name, valuePace])
+    );
+
     return expression.name;
   }
 
@@ -286,21 +339,20 @@ class IntermediateGenerator {
    */
   visitLiteralExpression(expression) {
     const resultPlace = this.generateTemp();
-    
+
     let valueStr;
-    if (expression.type === 'STRING') {
+    if (expression.type === "STRING") {
       valueStr = `"${expression.value}"`;
-    } else if (expression.type === 'CHARACTER') {
+    } else if (expression.type === "CHARACTER") {
       valueStr = `'${expression.value}'`;
     } else {
       valueStr = expression.value.toString();
     }
-    
-    this.instructions.push(new IntermediateInstruction('LOAD', [
-      resultPlace,
-      valueStr
-    ]));
-    
+
+    this.instructions.push(
+      new IntermediateInstruction("LOAD", [resultPlace, valueStr])
+    );
+
     return resultPlace;
   }
 
@@ -310,10 +362,10 @@ class IntermediateGenerator {
    * @returns {string} The place where the result is stored
    */
   visitInputExpression(expression) {
-    this.instructions.push(new IntermediateInstruction('INPUT', [
-      expression.variable
-    ]));
-    
+    this.instructions.push(
+      new IntermediateInstruction("INPUT", [expression.variable])
+    );
+
     return expression.variable;
   }
 
@@ -324,11 +376,9 @@ class IntermediateGenerator {
    */
   visitOutputExpression(expression) {
     const valuePace = this.visitExpression(expression.expression);
-    
-    this.instructions.push(new IntermediateInstruction('OUTPUT', [
-      valuePace
-    ]));
-    
+
+    this.instructions.push(new IntermediateInstruction("OUTPUT", [valuePace]));
+
     return valuePace;
   }
 
