@@ -38,16 +38,18 @@ class SemanticAnalyzer {
    * @param {ASTNode} statement The Statement node
    */
   visitStatement(statement) {
-    if (statement.constructor.name === 'VariableDeclaration') {
+    if (statement.constructor.name === "VariableDeclaration") {
       this.visitVariableDeclaration(statement);
-    } else if (statement.constructor.name === 'ExpressionStatement') {
+    } else if (statement.constructor.name === "ExpressionStatement") {
       this.visitExpressionStatement(statement);
-    } else if (statement.constructor.name === 'IfStatement') {
+    } else if (statement.constructor.name === "IfStatement") {
       this.visitIfStatement(statement);
-    } else if (statement.constructor.name === 'BlockStatement') {
+    } else if (statement.constructor.name === "BlockStatement") {
       this.visitBlockStatement(statement);
-    } else if (statement.constructor.name === 'ForStatement') {
+    } else if (statement.constructor.name === "ForStatement") {
       this.visitForStatement(statement);
+    } else if (statement.constructor.name === "WhileStatement") {
+      this.visitWhileStatement(statement);
     }
   }
 
@@ -128,6 +130,21 @@ class SemanticAnalyzer {
     statement.statements.forEach(subStatement => {
       this.visitStatement(subStatement);
     });
+  }
+
+  /**
+   * Visit a WhileStatement node
+   * @param {WhileStatement} statement The WhileStatement node
+   */
+  visitWhileStatement(statement) {
+    // Check that the condition is a boolean expression
+    this.visitExpression(statement.condition);
+    const condType = this.getExpressionType(statement.condition);
+    if (!this.isBoolean(condType)) {
+      this.addError("While loop condition must be a boolean (int) expression.", statement.condition.line);
+    }
+    // Analyze the body
+    this.visitStatement(statement.body);
   }
 
   /**
@@ -445,9 +462,9 @@ class SemanticAnalyzer {
    * @returns {boolean} True if the type is boolean
    */
   isBoolean(type) {
-    // In our simple language, any type can be used in a boolean context
-    return true;
-  }
+  // Accept both INTEGER and BOOLEAN types as valid boolean expressions
+  return type === 'INTEGER' || type === 'BOOLEAN' || type === 'SAHIH' || type === 'int' || type === 'boolean';
+}
 
   /**
    * Check if two types are compatible for assignment and comparison

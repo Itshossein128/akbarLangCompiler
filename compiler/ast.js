@@ -19,6 +19,14 @@ class Program extends ASTNode {
 }
 
 // Statement nodes
+class WhileStatement extends ASTNode {
+  constructor(condition, body, line, column) {
+    super(line, column);
+    this.condition = condition;
+    this.body = body;
+  }
+}
+
 class VariableDeclaration extends ASTNode {
   constructor(type, name, initializer, line, column) {
     super(line, column);
@@ -130,5 +138,6 @@ module.exports = {
   VariableExpression,
   LiteralExpression,
   InputExpression,
-  OutputExpression
+  OutputExpression,
+  WhileStatement
 };

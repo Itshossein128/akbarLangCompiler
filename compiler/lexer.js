@@ -110,6 +110,14 @@ class Lexer {
         this.string();
         break;
 
+      // Comments starting with '#'
+      case '#':
+        // Skip until end of line
+        while (this.peek() !== '\n' && !this.isAtEnd()) {
+          this.advance();
+        }
+        break;
+
       // Character literals
       case "'":
         this.character();

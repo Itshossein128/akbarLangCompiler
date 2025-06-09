@@ -68,6 +68,8 @@ class IntermediateGenerator {
       this.visitBlockStatement(statement);
     } else if (statement.constructor.name === "ForStatement") {
       this.visitForStatement(statement);
+    } else if (statement.constructor.name === "WhileStatement") {
+      this.visitWhileStatement(statement);
     }
   }
 
@@ -159,6 +161,22 @@ class IntermediateGenerator {
 
     // End the scope
     this.instructions.push(new IntermediateInstruction("SCOPE_END"));
+  }
+
+  /**
+   * Visit a WhileStatement node
+   * @param {WhileStatement} statement The WhileStatement node
+   */
+  visitWhileStatement(statement) {
+    // Generate unique labels for loop start and end
+    const startLabel = `L${this.labelCount++}`;
+    const endLabel = `L${this.labelCount++}`;
+    this.instructions.push(new IntermediateInstruction("LABEL", [startLabel]));
+    const conditionPlace = this.visitExpression(statement.condition);
+    this.instructions.push(new IntermediateInstruction("JUMP_IF_FALSE", [conditionPlace, endLabel]));
+    this.visitStatement(statement.body);
+    this.instructions.push(new IntermediateInstruction("JUMP", [startLabel]));
+    this.instructions.push(new IntermediateInstruction("LABEL", [endLabel]));
   }
 
   /**

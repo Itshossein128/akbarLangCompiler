@@ -1,0 +1,9 @@
+
+sahih adad = 5;
+sahih jam = 0;
+vaghti (adad > 0) {
+  jam = jam + adad;
+  adad = adad - 1;
+}
+
+benvis(jam);

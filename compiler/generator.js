@@ -12,37 +12,34 @@ class CodeGenerator {
 
   generate(instructions) {
     // First pass: analyze types and collect variables
+    // Collect all temp variables (tN) as destinations in any instruction that produces a value
     for (const instr of instructions) {
-      if (instr.op === "LOAD") {
-        const value = instr.args[1];
-        if (typeof value === "string" && value.startsWith('"')) {
-          this.tempVars.set(instr.args[0], "std::string");
-        } else if (typeof value === "string" && value.includes(".")) {
-          this.tempVars.set(instr.args[0], "double");
-        } else {
-          this.tempVars.set(instr.args[0], "int");
+      // If the instruction has a destination variable (first arg) and it matches tN
+      if (instr.args && instr.args.length > 0 && /^t\d+$/.test(instr.args[0])) {
+        // Determine type: string, double, or int
+        let type = "int";
+        if (instr.op === "LOAD") {
+          const value = instr.args[1];
+          if (typeof value === "string" && value.startsWith('"')) {
+            type = "std::string";
+          } else if (typeof value === "string" && value.includes(".")) {
+            type = "double";
+          } else {
+            type = "int";
+          }
+        } else if (["ADD","SUB","MUL","DIV","EQ","NEQ","LT","GT","LE","GE","AND","OR","NEG"].includes(instr.op)) {
+          type = "int";
         }
-      } else if (instr.op === "DECLARE" || instr.op === "DECLARE_INIT") {
-        this.variables.add(instr.args[1]); // Store variable name
+        // Only set if not already set (prefer string/double over int if already set)
+        if (!this.tempVars.has(instr.args[0]) || type !== "int") {
+          this.tempVars.set(instr.args[0], type);
+        }
+      }
+      // Handle program variables
+      if (instr.op === "DECLARE" || instr.op === "DECLARE_INIT") {
+        this.variables.add(instr.args[1]);
       } else if (instr.op === "INPUT") {
-        // Add input variables to the variables set
         this.variables.add(instr.args[0]);
-      } else if (
-        [
-          "ADD",
-          "SUB",
-          "MUL",
-          "DIV",
-          "EQ",
-          "NEQ",
-          "LT",
-          "GT",
-          "LE",
-          "GE",
-        ].includes(instr.op)
-      ) {
-        // Track temporary variables used in operations
-        this.tempVars.set(instr.args[0], "int");
       }
     }
 
@@ -202,6 +199,15 @@ class CodeGenerator {
         this.addCode("}");
         break;
       }
+      case "LABEL":
+        this.addCode(`${instr.args[0]}:`);
+        break;
+      case "JUMP_IF_FALSE":
+        this.addCode(`if (!(${instr.args[0]})) goto ${instr.args[1]};`);
+        break;
+      case "JUMP":
+        this.addCode(`goto ${instr.args[0]};`);
+        break;
     }
   }
 

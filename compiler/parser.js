@@ -81,6 +81,10 @@ class Parser {
       return this.forStatement();
     }
 
+    if (this.match(TokenType.VAGHTI)) {
+      return this.whileStatement();
+    }
+
     if (this.match(TokenType.LEFT_BRACE)) {
       return this.blockStatement();
     }
@@ -172,10 +176,10 @@ class Parser {
     if (this.check(TokenType.VALI)) {
       this.advance(); // Consume 'vali'
       if (this.match(TokenType.AGE)) {
-        this.ifStatement();
+        elseBranch = this.ifStatement();
+      } else {
+        elseBranch = this.statement();
       }
-
-      elseBranch = this.statement();
     } else if (this.check(TokenType.VAGARNA)) {
       this.advance(); // Consume 'vagarna'
       elseBranch = this.statement();
@@ -594,6 +598,20 @@ class Parser {
     err.lineNumber = token.line;
     err.columnNumber = token.column;
     throw err;
+  }
+
+  /**
+   * Parse a while statement (vaghti)
+   * @returns {WhileStatement} While statement node
+   */
+  whileStatement() {
+    const TokenType = require("./token").TokenType;
+    const { WhileStatement } = require("./ast");
+    this.consume(TokenType.LEFT_PAREN, "Expect '(' after 'vaghti'.");
+    const condition = this.expression();
+    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after while condition.");
+    const body = this.statement();
+    return new WhileStatement(condition, body, condition.line, condition.column);
   }
 }
 

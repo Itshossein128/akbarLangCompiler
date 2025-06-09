@@ -19,6 +19,7 @@ const TokenType = {
   VALI: 'VALI',   // else if
   VAGARNA: 'VAGARNA',     // else
   BARAYE: 'BARAYE',       // for
+  VAGHTI: 'VAGHTI',       // while
   
   // Symbols
   EQUAL: 'EQUAL',             // =
@@ -67,6 +68,7 @@ const Keywords = {
   'vali': TokenType.VALI,
   'vagarna': TokenType.VAGARNA,
   'baraye': TokenType.BARAYE,
+  'vaghti': TokenType.VAGHTI,
   'ta': TokenType.TA,
   'va': TokenType.VA,
   'ya': TokenType.YA
